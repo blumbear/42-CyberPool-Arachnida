@@ -1,5 +1,4 @@
 import argparse
-import sys
 import os
 import requests
 from bs4 import BeautifulSoup
