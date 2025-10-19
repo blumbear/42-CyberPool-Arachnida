@@ -107,17 +107,20 @@ def file_lister(folder):
 	return os.listdir(folder)
 
 def extract_data_from_folder(foldername):
-	supported_format = [
-		".JPG",
+	supported_formats = [
 		".jpg",
-		".PNG",
+		".jpeg",
 		".png",
 		".gif",
 		".bmp",
 	]
 	files = file_lister(foldername)
 	for image in files:
-		if image[-4:] in supported_format:
+		if any(image.lower().endswith(fmt) for fmt in supported_formats):
 			extract_data(foldername + image)
 
-extract_data_from_folder("./data/")
+def main():
+	extract_data_from_folder('./data/')
+
+if __name__ == "__main__":
+	main()
