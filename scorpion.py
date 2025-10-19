@@ -120,4 +120,4 @@ def extract_data_from_folder(foldername):
 		if image[-4:] in supported_format:
 			extract_data(foldername + image)
 
-extract_data_from_folder("image/")
+extract_data_from_folder("./data/")
