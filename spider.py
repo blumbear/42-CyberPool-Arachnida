@@ -5,6 +5,8 @@ from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
 import time
 
+already_visited = []
+
 def init_dir(res_dir):
 	if not os.path.exists(res_dir):
 		os.makedirs(res_dir)
@@ -63,7 +65,9 @@ def scrape_url(url, save_dir, recursive, length, domain):
 		for link in links:
 			link = urljoin(url, link['href'])
 			if urlparse(link).netloc == urlparse(url).netloc or domain == True:
-				scrape_url(link, save_dir, recursive, length - 1, domain)
+				if link not in already_visited:
+					already_visited.append(link)
+					scrape_url(link, save_dir, recursive, length - 1, domain)
 
 
 def main():
