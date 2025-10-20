@@ -1,33 +1,28 @@
 from PIL import Image
-import exifread
+import exif
 import os
 import argparse
 
 def format_gps_coordinates(lat_data, lat_ref, lon_data, lon_ref):
 	"""Convertit les coordonnées DMS en format lisible"""
+	print()
+	print()
+	print(lat_data, lat_ref, lon_data, lon_ref)
+	print()
+	print()
 		
-	lat_degrees = float(lat_data.values[0])
-	lat_minutes = float(lat_data.values[1])
-		
-	if '/' in str(lat_data.values[2]):
-		parts = str(lat_data.values[2]).split('/')
-		lat_seconds = float(parts[0]) / float(parts[1])
-	else:
-		lat_seconds = float(lat_data.values[2])
+	lat_degrees = lat_data[0]
+	lat_minutes = lat_data[1]
+	lat_seconds = lat_data[2]
 
 	lat_decimal = lat_degrees + lat_minutes/60 + lat_seconds/3600
 	if lat_ref == 'S':
 		lat_decimal = -lat_decimal
 		
 	# Convertir longitude DMS vers décimales  
-	lon_degrees = float(lon_data.values[0])
-	lon_minutes = float(lon_data.values[1])
-
-	if '/' in str(lon_data.values[2]):
-		parts = str(lon_data.values[2]).split('/')
-		lon_seconds = float(parts[0]) / float(parts[1])
-	else:
-		lon_seconds = float(lon_data.values[2])
+	lon_degrees = lon_data[0]
+	lon_minutes = lon_data[1]
+	lon_seconds = lon_data[2]
 
 	lon_decimal = lon_degrees + lon_minutes/60 + lon_seconds/3600
 	if lon_ref == 'W':
@@ -35,58 +30,64 @@ def format_gps_coordinates(lat_data, lat_ref, lon_data, lon_ref):
 		
 	return lat_decimal, lon_decimal
 
-def format_gps_data(tags):
+def format_gps_data(gps_tags):
 	"""Formate les données GPS de manière lisible"""
-		
-	gps_lat = None
-	gps_lon = None
-	gps_lat_ref = None
-	gps_lon_ref = None
-	gps_alt = None
-	gps_time = None
+
+	gps_lat = None,
+	gps_lon = None,
+	gps_lat_ref = None,
+	gps_lon_ref = None,
+	gps_alt = None,
+	gps_time = None,
 	gps_date = None
 		
+	print (gps_tags)
 	# Extraire les données GPS
-	for tag, value in tags.items():
-		if 'GPS GPSLatitude' == tag and 'Ref' not in tag:
-			gps_lat = value
-		elif 'GPS GPSLatitudeRef' == tag:
-			gps_lat_ref = str(value)
-		elif 'GPS GPSLongitude' == tag and 'Ref' not in tag:
-			gps_lon = value
-		elif 'GPS GPSLongitudeRef' == tag:
-			gps_lon_ref = str(value)
-		elif 'GPS GPSAltitude' == tag and 'Ref' not in tag:
+	for tag in gps_tags:
+		if tag[0] == 'gps_latitude' and 'ref' not in tag[0]:
+			gps_lat = tag[1]
+		elif tag[0] == 'gps_latitude_ref':
+			gps_lat_ref = str(tag[1])
+		elif tag[0] == 'gps_longitude' and 'ref' not in tag[0]:
+			gps_lon = tag[1]
+		elif tag[0] == 'gps_longitude_ref':
+			gps_lon_ref = str(tag[1])
+		elif tag[0] == 'gps_altitude' and 'ref' not in tag[0]:
 			try:
-				gps_alt = float(value)
+				gps_alt = float(tag[1])
 			except (ValueError, TypeError):
-				if '/' in str(value):
-					parts = str(value).split('/')
+				if '/' in str(tag[1]):
+					parts = str(tag[1]).split('/')
 					gps_alt = float(parts[0]) / float(parts[1])
 				else:
 					gps_alt = None
-		elif 'GPS GPSTimeStamp' == tag:
-			gps_time = value
-		elif 'GPS GPSDate' == tag:
-			gps_date = str(value)
+		elif tag[0] == 'gps_timestamp':
+			gps_time = tag[1]
+		elif tag[0] == 'gps_datestamp':
+			gps_date = str(tag[1])
 		
 	# Formater l'affichage
+	print()
+	print()
+	print(gps_alt, gps_date, gps_lat, gps_lat_ref, gps_lon, gps_lon_ref, gps_time)
+	print()
+	print()
 	if gps_lat and gps_lon and gps_lat_ref and gps_lon_ref:
 		lat_decimal, lon_decimal = format_gps_coordinates(gps_lat, gps_lat_ref, gps_lon, gps_lon_ref)
 
 		print(f"\n\033[1;31m🌍 GÉOLOCALISATION (Format):\033[0m")
 		print(f" • \033[1;91mPosition GPS\033[0m: \033[93m{lat_decimal:.6f}°{gps_lat_ref}, {lon_decimal:.6f}°{gps_lon_ref}\033[0m")
 
-		lat_sec = float(str(gps_lat.values[2]).split('/')[0]) / float(str(gps_lat.values[2]).split('/')[1]) if '/' in str(gps_lat.values[2]) else float(gps_lat.values[2])
-		lon_sec = float(str(gps_lon.values[2]).split('/')[0]) / float(str(gps_lon.values[2]).split('/')[1]) if '/' in str(gps_lon.values[2]) else float(gps_lon.values[2])
+		lat_sec = gps_lat[2]
+		lon_sec = gps_lon[2]
 	
-		print(f" • \033[1;91mCoordonnées DMS\033[0m: \033[93m{gps_lat.values[0]}°{gps_lat.values[1]}'{lat_sec:.1f}\"{gps_lat_ref}, {gps_lon.values[0]}°{gps_lon.values[1]}'{lon_sec:.1f}\"{gps_lon_ref}\033[0m")
+		print(f" • \033[1;91mCoordonnées DMS\033[0m: \033[93m{gps_lat[0]}°{gps_lat[1]}'{lat_sec:.1f}\"{gps_lat_ref}, {gps_lon[0]}°{gps_lon[1]}'{lon_sec:.1f}\"{gps_lon_ref}\033[0m")
 		
 		if gps_alt:
 			print(f" • \033[1;91mAltitude\033[0m: \033[93m{gps_alt:.1f}m\033[0m")
 		
 		if gps_date and gps_time:
-			time_str = f"{int(gps_time.values[0]):02d}:{int(gps_time.values[1]):02d}:{int(gps_time.values[2]):02d}"
+			time_str = f"{int(gps_time[0]):02d}:{int(gps_time[1]):02d}:{int(gps_time[2]):02d}"
 			print(f" • \033[1;91mDate/Heure GPS\033[0m: \033[93m{gps_date} {time_str}\033[0m")
 		
 		# Lien Google Maps
@@ -101,48 +102,89 @@ def format_gps_data(tags):
 
 def extract_data(imagePath):
 
-	useless_data = [
-		'JPEGThumbnail'
-	]
-
-	interesting_tags = [
-	# Géolocalisation (critiques)
-	'GPS GPSLatitude',
-	'GPS GPSLongitude', 
-	'GPS GPSAltitude',
-	'GPS GPSDate',
-	'GPS GPSTimeStamp',
-	'GPS GPSLatitudeRef',
-	'GPS GPSLongitudeRef',
-	'GPS GPSAltitudeRef',
-
-	# Informations sur l'appareil
-	'Image Model',
-	'Image Software',
-	'Image HostComputer',
-	'EXIF LensMake',
-	'EXIF LensModel',
-
-	# Métadonnées temporelles
-	'Image DateTime',
-	'EXIF DateTimeOriginal',
-	'EXIF DateTimeDigitized',
-
-	# Paramètres de prise de vue
-	'EXIF ExposureTime',
-	'EXIF FNumber',
-	'EXIF ISOSpeedRatings',
-	'EXIF FocalLength',
-	'EXIF Flash',
+	categories = {
+		'device_info': [
+			'make',
+			'model', 
+			'lens_make',
+			'lens_model',
+			'lens_specification',
+			'software',
+			'maker_note'
+		],
 			
-	# Informations techniques
-	'Image XResolution',
-	'Image YResolution',
-	'EXIF ComponentsConfiguration',
-	'EXIF ExifImageWidth',
-	'EXIF ExifImageLength',
-	'EXIF ColorSpace'
-	]
+		'datetime_info': [
+			'datetime',
+			'datetime_original',
+			'datetime_digitized',
+			'offset_time',
+			'offset_time_original',
+			'offset_time_digitized',
+			'subsec_time_original',
+			'subsec_time_digitized'
+		],
+
+		'camera_settings': [
+			'f_number',
+			'aperture_value',
+			'exposure_time',
+			'shutter_speed_value',
+			'photographic_sensitivity',  # ISO
+			'exposure_bias_value',
+			'exposure_mode',
+			'exposure_program',
+			'flash',
+			'focal_length',
+			'focal_length_in_35mm_film',
+			'white_balance',
+			'metering_mode',
+			'scene_capture_type',
+			'scene_type',
+			'brightness_value'
+		],
+		
+		'image_specs': [
+			'pixel_x_dimension',
+			'pixel_y_dimension',
+			'x_resolution',
+			'y_resolution',
+			'resolution_unit',
+			'orientation',
+			'color_space',
+			'components_configuration',
+			'compression'
+		],
+
+		'technical_metadata': [
+			'exif_version',
+			'flashpix_version',
+			'sensing_method',
+			'subject_area',
+			'y_and_c_positioning',
+			'jpeg_interchange_format',
+			'jpeg_interchange_format_length',
+			'_exif_ifd_pointer'
+		],
+
+		'gps_info': [
+			'gps_latitude',
+			'gps_latitude_ref',
+			'gps_longitude',
+			'gps_longitude_ref',
+			'gps_altitude',
+			'gps_altitude_ref',
+			'gps_timestamp',
+			'gps_datestamp',
+			'gps_speed',
+			'gps_speed_ref',
+			'gps_img_direction',
+			'gps_img_direction_ref',
+			'gps_dest_bearing',
+			'gps_dest_bearing_ref',
+			'gps_horizontal_positioning_error',
+			'_gps_ifd_pointer'
+		]
+	}
 
 	with Image.open(imagePath) as img:
 		print(f"\n\033[1;35m{'='*60}\033[0m")
@@ -155,29 +197,30 @@ def extract_data(imagePath):
 		print(f" • \033[1;32mTaille\033[0m: \033[37m{img.size}\033[0m")
 		print(f" • \033[1;32mPalette\033[0m: \033[37m{img.palette}\033[0m")
 
-	with open(imagePath, "rb") as image:
-		tags = exifread.process_file(image)
+	with open(imagePath, "rb") as img:
+		image = exif.Image(img)
+		list_all = sorted(image.list_all())
 		gps_tags = []
 		device_tags = []
 		time_tags = []
 		camera_tags = []
 		tech_tags = []
 	
-		for tag, value in tags.items():
-			if tag in interesting_tags:
-				if 'GPS' in tag:
-					gps_tags.append((tag, value))
-				elif 'Model' in tag or 'Software' in tag or 'Host' in tag or 'Lens' in tag:
-					device_tags.append((tag, value))
-				elif 'DateTime' in tag or 'Date' in tag or 'Time' in tag:
-					time_tags.append((tag, value))
-				elif 'Exposure' in tag or 'FNumber' in tag or 'ISO' in tag or 'Flash' in tag or 'Focal' in tag:
-					camera_tags.append((tag, value))
-				else:
-					tech_tags.append((tag, value))
+		for tag in list_all:
+			# print(f"{tag}: {image.get(tag)}")
+			if tag in categories['gps_info']:
+				gps_tags.append((tag, image.get(tag)))
+			elif tag in categories['device_info']:
+				device_tags.append((tag, image.get(tag)))
+			elif tag in categories['datetime_info']:
+				time_tags.append((tag, image.get(tag)))
+			elif tag in categories['camera_settings']:
+				camera_tags.append((tag, image.get(tag)))
+			else:
+				tech_tags.append((tag, image.get(tag)))
 
 		if gps_tags:
-			format_gps_data(tags)  # Passer le dictionnaire tags, pas gps_tags
+			format_gps_data(gps_tags)  # Passer le dictionnaire tags, pas gps_tags
 		else:
 			print(f"\n\033[1;31m🌍 GÉOLOCALISATION:\033[0m")
 			print(f" • \033[1;91mAucune donnée GPS trouvée\033[0m")
@@ -210,7 +253,14 @@ def extract_data(imagePath):
 def file_lister(folder):
 	return os.listdir(folder)
 
-def extract_data_from_folder(foldername):
+def delete_exif_data(imagePath):
+	with open(imagePath, "wb") as image:
+		tags = exif.Image(image)
+		for tag, value in tags.item():
+			value = ""
+
+
+def extract_data_from_folder(foldername, anonimize):
 	supported_formats = [
 		".jpg",
 		".jpeg",
@@ -222,6 +272,8 @@ def extract_data_from_folder(foldername):
 	for image in files:
 		if any(image.lower().endswith(fmt) for fmt in supported_formats):
 			extract_data(foldername + image)
+			if (anonimize):
+				delete_exif_data(foldername + image)
 
 def main():
 	parser = argparse.ArgumentParser(description='Scorpion - EXIF Metadata Extractor')
@@ -239,7 +291,7 @@ def main():
 
 	args = parser.parse_args()
 
-	extract_data_from_folder(args.path)
+	extract_data_from_folder(args.path, args.anonimize)
 
 if __name__ == "__main__":
 	main()
