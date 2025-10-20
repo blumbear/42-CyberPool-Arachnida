@@ -16,9 +16,17 @@ def download_image(img_url, save_path):
 			with open(save_path, 'wb') as f:
 				for chunk in response.iter_content(1024):
 					f.write(chunk)
+			print(f"✅ Downloaded: {img_url}")
 			return True
+		else:
+			print(f"❌ Failed ({response.status_code}): {img_url}")
+			return False
+	except requests.exceptions.Timeout:
+		print(f"⏱️ Timeout: {img_url}")
+	except requests.exceptions.ConnectionError:
+		print(f"🔌 Connection error: {img_url}")
 	except Exception as e:
-		print(f"Error downloading {img_url}: {e}")
+		print(f"💥 Error downloading {img_url}: {e}")
 	return False
 
 def scrape_url(url, save_dir, recursive, length, domain):
@@ -74,7 +82,7 @@ def main():
 
 	parser.add_argument('-p', '--path',
 						type=str,
-						default='./data/',
+						default='data/',
 						help='Indicate the path where the download files will be saved'
 					)
 	
