@@ -89,6 +89,10 @@ def format_gps_data(gps_tags):
 		print(f" • \033[1;91mDonnées GPS incomplètes\033[0m")
 		return None
 
+def handle_error(error):
+	if 'UnicodeDecodeError occurred during unpack operation' in error:
+		return 'UnicodeDecodeError occurred during unpack operation'
+	return None
 
 def extract_data(imagePath):
 
@@ -197,16 +201,21 @@ def extract_data(imagePath):
 		tech_tags = []
 	
 		for tag in list_all:
+			try:
+				value = image.get(tag)
+			except Exception as e:
+				value = f"<error reading tag: {tag}>"
+
 			if tag in categories['gps_info']:
-				gps_tags.append((tag, image.get(tag)))
+				gps_tags.append((tag, value))
 			elif tag in categories['device_info']:
-				device_tags.append((tag, image.get(tag)))
+				device_tags.append((tag, value))
 			elif tag in categories['datetime_info']:
-				time_tags.append((tag, image.get(tag)))
+				time_tags.append((tag, value))
 			elif tag in categories['camera_settings']:
-				camera_tags.append((tag, image.get(tag)))
+				camera_tags.append((tag, value))
 			else:
-				tech_tags.append((tag, image.get(tag)))
+				tech_tags.append((tag, value))
 
 		if gps_tags:
 			format_gps_data(gps_tags)  # Passer le dictionnaire tags, pas gps_tags
