@@ -91,7 +91,8 @@ def format_gps_data(tags):
 		
 		# Lien Google Maps
 		maps_url = f"https://www.google.com/maps?q={lat_decimal},{lon_decimal}"
-		return (maps_url)
+		print(f" • \033[1;91mGoogle Maps\033[0m: \033[94m{maps_url}\033[0m")
+		return (None)
 	else:
 		print(f"\n\033[1;31m🌍 GÉOLOCALISATION:\033[0m")
 		print(f" • \033[1;91mDonnées GPS incomplètes\033[0m")
