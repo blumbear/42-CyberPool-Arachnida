@@ -119,7 +119,7 @@ def extract_data(imagePath):
 			'aperture_value',
 			'exposure_time',
 			'shutter_speed_value',
-			'photographic_sensitivity',  # ISO
+			'photographic_sensitivity',
 			'exposure_bias_value',
 			'exposure_mode',
 			'exposure_program',
