@@ -2,14 +2,10 @@ from PIL import Image
 import exif
 import os
 import argparse
+import subprocess
 
 def format_gps_coordinates(lat_data, lat_ref, lon_data, lon_ref):
 	"""Convertit les coordonnées DMS en format lisible"""
-	print()
-	print()
-	print(lat_data, lat_ref, lon_data, lon_ref)
-	print()
-	print()
 		
 	lat_degrees = lat_data[0]
 	lat_minutes = lat_data[1]
@@ -41,7 +37,6 @@ def format_gps_data(gps_tags):
 	gps_time = None,
 	gps_date = None
 		
-	print (gps_tags)
 	# Extraire les données GPS
 	for tag in gps_tags:
 		if tag[0] == 'gps_latitude' and 'ref' not in tag[0]:
@@ -67,11 +62,6 @@ def format_gps_data(gps_tags):
 			gps_date = str(tag[1])
 		
 	# Formater l'affichage
-	print()
-	print()
-	print(gps_alt, gps_date, gps_lat, gps_lat_ref, gps_lon, gps_lon_ref, gps_time)
-	print()
-	print()
 	if gps_lat and gps_lon and gps_lat_ref and gps_lon_ref:
 		lat_decimal, lon_decimal = format_gps_coordinates(gps_lat, gps_lat_ref, gps_lon, gps_lon_ref)
 
@@ -207,7 +197,6 @@ def extract_data(imagePath):
 		tech_tags = []
 	
 		for tag in list_all:
-			# print(f"{tag}: {image.get(tag)}")
 			if tag in categories['gps_info']:
 				gps_tags.append((tag, image.get(tag)))
 			elif tag in categories['device_info']:
@@ -254,10 +243,30 @@ def file_lister(folder):
 	return os.listdir(folder)
 
 def delete_exif_data(imagePath):
-	with open(imagePath, "wb") as image:
-		tags = exif.Image(image)
-		for tag, value in tags.item():
-			value = ""
+	try:
+		base_name = os.path.splitext(imagePath)[0]
+		extension = os.path.splitext(imagePath)[1]
+		outputPath = f"{base_name}_anonymized{extension}"
+
+		subprocess.run(['cp', imagePath, outputPath], check=True)
+
+		result = subprocess.run([
+			'exiftool',
+			'-all=',
+			'-overwrite_original',
+			outputPath
+		], capture_output=True, text=True)
+
+		if result.returncode == 0:
+			print(f"Anonymized image saved: {outputPath}")
+		else:
+			print(f"Exiftool error: {result.stderr}")
+
+	except subprocess.CalledProcessError as e:
+		print(f"Error during anonymization: {e}")
+	except FileNotFoundError:
+		print("exiftool is not installed. Install it with: sudo apt install libimage-exiftool-perl")
+
 
 
 def extract_data_from_folder(foldername, anonimize):
