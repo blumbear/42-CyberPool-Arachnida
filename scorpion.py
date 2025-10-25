@@ -192,70 +192,94 @@ def extract_data(imagePath):
 		print(f" • \033[1;32mPalette\033[0m: \033[37m{img.palette}\033[0m")
 
 	with open(imagePath, "rb") as img:
-		image = exif.Image(img)
-		list_all = sorted(image.list_all())
-		gps_tags = []
-		device_tags = []
-		time_tags = []
-		camera_tags = []
-		tech_tags = []
-	
-		for tag in list_all:
-			try:
-				value = image.get(tag)
-			except Exception as e:
-				value = f"<error reading tag: {tag}>"
+		try:
+			image = exif.Image(img)
+			list_all = sorted(image.list_all())
+			gps_tags = []
+			device_tags = []
+			time_tags = []
+			camera_tags = []
+			tech_tags = []
+		
+			for tag in list_all:
+				try:
+					value = image.get(tag)
+				except Exception as e:
+					value = f"<error reading tag: {tag}>"
 
-			if tag in categories['gps_info']:
-				gps_tags.append((tag, value))
-			elif tag in categories['device_info']:
-				device_tags.append((tag, value))
-			elif tag in categories['datetime_info']:
-				time_tags.append((tag, value))
-			elif tag in categories['camera_settings']:
-				camera_tags.append((tag, value))
+				if tag in categories['gps_info']:
+					gps_tags.append((tag, value))
+				elif tag in categories['device_info']:
+					device_tags.append((tag, value))
+				elif tag in categories['datetime_info']:
+					time_tags.append((tag, value))
+				elif tag in categories['camera_settings']:
+					camera_tags.append((tag, value))
+				else:
+					tech_tags.append((tag, value))
+
+			if gps_tags:
+				format_gps_data(gps_tags)  # Passer le dictionnaire tags, pas gps_tags
 			else:
-				tech_tags.append((tag, value))
+				print(f"\n\033[1;31m🌍 GÉOLOCALISATION:\033[0m")
+				print(f" • \033[1;91mAucune donnée GPS trouvée\033[0m")
 
-		if gps_tags:
-			format_gps_data(gps_tags)  # Passer le dictionnaire tags, pas gps_tags
-		else:
-			print(f"\n\033[1;31m🌍 GÉOLOCALISATION:\033[0m")
-			print(f" • \033[1;91mAucune donnée GPS trouvée\033[0m")
-
-		if gps_tags:
-			print(f"\n\033[1;31m🌍 GÉOLOCALISATION (Not Format):\033[0m")
-			for tag, value in gps_tags:
-				print(f" • \033[1;91m{tag}\033[0m: \033[93m{value}\033[0m")
-		
-		if device_tags:
-			print(f"\n\033[1;34m📱 INFORMATIONS APPAREIL:\033[0m")
-			for tag, value in device_tags:
-				print(f" • \033[1;94m{tag}\033[0m: \033[96m{value}\033[0m")
-		
-		if time_tags:
-			print(f"\n\033[1;35m⏰ MÉTADONNÉES TEMPORELLES:\033[0m")
-			for tag, value in time_tags:
-				print(f" • \033[1;95m{tag}\033[0m: \033[97m{value}\033[0m")
-		
-		if camera_tags:
-			print(f"\n\033[1;32m📸 PARAMÈTRES DE PRISE DE VUE:\033[0m")
-			for tag, value in camera_tags:
-				print(f" • \033[1;92m{tag}\033[0m: \033[37m{value}\033[0m")
-		
-		if tech_tags:
-			print(f"\n\033[1;36m⚙️  INFORMATIONS TECHNIQUES:\033[0m")
-			for tag, value in tech_tags:
-				print(f" • \033[1;96m{tag}\033[0m: \033[37m{value}\033[0m")
+			if gps_tags:
+				print(f"\n\033[1;31m🌍 GÉOLOCALISATION (Not Format):\033[0m")
+				for tag, value in gps_tags:
+					print(f" • \033[1;91m{tag}\033[0m: \033[93m{value}\033[0m")
+			
+			if device_tags:
+				print(f"\n\033[1;34m📱 INFORMATIONS APPAREIL:\033[0m")
+				for tag, value in device_tags:
+					print(f" • \033[1;94m{tag}\033[0m: \033[96m{value}\033[0m")
+			
+			if time_tags:
+				print(f"\n\033[1;35m⏰ MÉTADONNÉES TEMPORELLES:\033[0m")
+				for tag, value in time_tags:
+					print(f" • \033[1;95m{tag}\033[0m: \033[97m{value}\033[0m")
+			
+			if camera_tags:
+				print(f"\n\033[1;32m📸 PARAMÈTRES DE PRISE DE VUE:\033[0m")
+				for tag, value in camera_tags:
+					print(f" • \033[1;92m{tag}\033[0m: \033[37m{value}\033[0m")
+			
+			if tech_tags:
+				print(f"\n\033[1;36m⚙️  INFORMATIONS TECHNIQUES:\033[0m")
+				for tag, value in tech_tags:
+					print(f" • \033[1;96m{tag}\033[0m: \033[37m{value}\033[0m")
+		except Exception as e:
+			print(f"\n\033[1;31m❌ ERREUR LECTURE EXIF:\033[0m")
+			print(f" • \033[1;91mImpossible de lire les données EXIF de cette image\033[0m")
+			print(f" • \033[1;91mErreur\033[0m: \033[93m{str(e)}\033[0m")
+			print(f" • \033[1;91mFormat potentiellement corrompu ou non supporté\033[0m")
+			
+			try:
+				from PIL.ExifTags import TAGS
+				with Image.open(imagePath) as img:
+					exifdata = img.getexif()
+					if exifdata:
+						print(f"\n\033[1;33m📋 MÉTADONNÉES PIL (limitées):\033[0m")
+						for tag_id in exifdata:
+							tag = TAGS.get(tag_id, tag_id)
+							data = exifdata.get(tag_id)
+							print(f" • \033[1;93m{tag}\033[0m: \033[37m{data}\033[0m")
+					else:
+						print(f" • \033[1;91mAucune donnée EXIF trouvée avec PIL\033[0m")
+			except Exception as pil_error:
+				print(f" • \033[1;91mÉchec avec PIL également\033[0m: {pil_error}")
 
 def file_lister(folder):
 	return os.listdir(folder)
 
-def delete_exif_data(imagePath):
+def delete_exif_data(imagePath, replace):
 	try:
 		base_name = os.path.splitext(imagePath)[0]
 		extension = os.path.splitext(imagePath)[1]
-		outputPath = f"{base_name}_anonymized{extension}"
+		if replace:
+			outputPath = f"{base_name}{extension}"
+		else:
+			outputPath = f"{base_name}_anonymized{extension}"
 
 		subprocess.run(['cp', imagePath, outputPath], check=True)
 
@@ -276,9 +300,7 @@ def delete_exif_data(imagePath):
 	except FileNotFoundError:
 		print("exiftool is not installed. Install it with: sudo apt install libimage-exiftool-perl")
 
-
-
-def extract_data_from_folder(foldername, anonimize):
+def extract_data_from_folder(foldername, anonimize, replace_anonimize):
 	supported_formats = [
 		".jpg",
 		".jpeg",
@@ -291,7 +313,8 @@ def extract_data_from_folder(foldername, anonimize):
 		if any(image.lower().endswith(fmt) for fmt in supported_formats):
 			extract_data(foldername + image)
 			if (anonimize):
-				delete_exif_data(foldername + image)
+				delete_exif_data(foldername + image, replace_anonimize)
+
 
 def main():
 	parser = argparse.ArgumentParser(description='Scorpion - EXIF Metadata Extractor')
@@ -306,10 +329,15 @@ def main():
 					action='store_true',
 					help='Allow the scorpion to delete the EXIF data'
 				)
+	
+	parser.add_argument('-ra', '--replace-anonimize',
+					action='store_true',
+					help='Allow the scorpion to delete the EXIF data'
+				)
 
 	args = parser.parse_args()
 
-	extract_data_from_folder(args.path, args.anonimize)
+	extract_data_from_folder(args.path, args.anonimize, args.replace_anonimize)
 
 if __name__ == "__main__":
 	main()
