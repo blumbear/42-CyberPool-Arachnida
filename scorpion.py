@@ -281,7 +281,8 @@ def delete_exif_data(imagePath, replace):
 		else:
 			outputPath = f"{base_name}_anonymized{extension}"
 
-		subprocess.run(['cp', imagePath, outputPath], check=True)
+		if outputPath != imagePath:
+			subprocess.run(['cp', imagePath, outputPath], check=True)
 
 		result = subprocess.run([
 			'exiftool',
@@ -313,6 +314,8 @@ def extract_data_from_folder(foldername, anonimize, replace_anonimize):
 		if any(image.lower().endswith(fmt) for fmt in supported_formats):
 			extract_data(foldername + image)
 			if (anonimize):
+				delete_exif_data(foldername + image, False)
+			elif (replace_anonimize):
 				delete_exif_data(foldername + image, replace_anonimize)
 
 
