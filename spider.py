@@ -104,7 +104,7 @@ def main():
 	print(f"Profondeur max: {args.length}")
 	print(f"domain: {args.domain}")
 
-	scrape_url(args.url, args.path, args.recursive, args.length, args.domain)
+	scrape_url(args.url, args.path, args.recursive, args.length)
 
 if __name__ == "__main__":
 	main()
