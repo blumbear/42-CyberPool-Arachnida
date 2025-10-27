@@ -102,7 +102,6 @@ def main():
 	print(f"Dossier de destination: {args.path}")
 	print(f"Mode récursif: {args.recursive}")
 	print(f"Profondeur max: {args.length}")
-	print(f"domain: {args.domain}")
 
 	scrape_url(args.url, args.path, args.recursive, args.length)
 
