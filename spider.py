@@ -31,7 +31,7 @@ def download_image(img_url, save_path):
 		print(f"💥 Error downloading {img_url}: {e}")
 	return False
 
-def scrape_url(url, save_dir, recursive, length, domain):
+def scrape_url(url, save_dir, recursive, length):
 
 	supported_formats = [
 	".jpg",
@@ -64,10 +64,10 @@ def scrape_url(url, save_dir, recursive, length, domain):
 		links = soup.find_all('a', href=True)
 		for link in links:
 			link = urljoin(url, link['href'])
-			if urlparse(link).netloc == urlparse(url).netloc or domain == True:
+			if urlparse(link).netloc == urlparse(url).netloc:
 				if link not in already_visited:
 					already_visited.append(link)
-					scrape_url(link, save_dir, recursive, length - 1, domain)
+					scrape_url(link, save_dir, recursive, length - 1)
 
 
 def main():
@@ -88,12 +88,6 @@ def main():
 						type=str,
 						default='data/',
 						help='Indicate the path where the download files will be saved'
-					)
-	
-	parser.add_argument('-d', '--domain',
-						type=str,
-						default=False,
-						help="Ask to the spider stay to on the same domain"
 					)
 
 	parser.add_argument('url',
