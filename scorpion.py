@@ -94,6 +94,60 @@ def handle_error(error):
 		return 'UnicodeDecodeError occurred during unpack operation'
 	return None
 
+def extract_hex_metadata(imagePath):
+	try:
+		print(f"\n\033[1;33m📋 ANALYSE HEXADÉCIMALE:\033[0m")
+		with open(imagePath, 'rb') as f:
+			data = f.read(2048)  # Lire les premiers 2KB
+			
+			# Rechercher des signatures connues
+			signatures = {
+				b'Exif': 'Signature EXIF trouvée',
+				b'JFIF': 'Signature JFIF trouvée',
+				b'Adobe': 'Signature Adobe trouvée',
+				b'Canon': 'Signature Canon trouvée',
+				b'Nikon': 'Signature Nikon trouvée',
+				b'OLYMPUS': 'Signature Olympus trouvée'
+			}
+			
+			for sig, desc in signatures.items():
+				if sig in data:
+					print(f" • \033[1;93m{desc}\033[0m")
+					
+			# Rechercher des chaînes de caractères
+			import re
+			text_matches = re.findall(b'[A-Za-z0-9\s]{4,}', data)
+			if text_matches:
+				print(f" • \033[1;93mChaînes trouvées\033[0m:")
+				for match in text_matches[:10]:  # Limiter à 10
+					try:
+						decoded = match.decode('utf-8', errors='ignore').strip()
+						if len(decoded) > 3:
+							print(f"   - \033[37m{decoded}\033[0m")
+					except:
+						pass
+						
+	except Exception as e:
+		print(f" • \033[1;91mErreur analyse hex\033[0m: {e}")
+
+
+def extract_with_exifread(imagePath):
+	try:
+		import exifread
+		with open(imagePath, 'rb') as f:
+			tags = exifread.process_file(f)
+			if tags:
+				print(f"\n\033[1;33m📋 MÉTADONNÉES EXIFREAD:\033[0m")
+				for tag in tags.keys():
+					if tag not in ('JPEGThumbnail', 'TIFFThumbnail', 'Filename', 'EXIF MakerNote'):
+						print(f" • \033[1;93m{tag}\033[0m: \033[37m{tags[tag]}\033[0m")
+			else:
+				print(f" • \033[1;91mAucune donnée trouvée avec exifread\033[0m")
+	except ImportError:
+		print(f" • \033[1;91mexifread non installé (pip install ExifRead)\033[0m")
+	except Exception as e:
+		print(f" • \033[1;91mErreur exifread\033[0m: {e}")
+
 def extract_data(imagePath):
 
 	categories = {
@@ -228,26 +282,42 @@ def extract_data(imagePath):
 				print(f"\n\033[1;31m🌍 GÉOLOCALISATION (Not Format):\033[0m")
 				for tag, value in gps_tags:
 					print(f" • \033[1;91m{tag}\033[0m: \033[93m{value}\033[0m")
+			elif gps_tags.count() == 0:
+				print(f"\n\033[1;31m🌍 GÉOLOCALISATION (Not Format):\033[0m")
+				print(f" • \033[1;91mAucune donnée GPS trouvée\033[0m")
 			
 			if device_tags:
 				print(f"\n\033[1;34m📱 INFORMATIONS APPAREIL:\033[0m")
 				for tag, value in device_tags:
 					print(f" • \033[1;94m{tag}\033[0m: \033[96m{value}\033[0m")
-			
+			elif device_tags.count() == 0:
+				print(f"\n\033[1;31m📱 INFORMATIONS APPAREIL:\033[0m")
+				print(f" • \033[1;91mAucune appareil trouvée\033[0m")
+
 			if time_tags:
 				print(f"\n\033[1;35m⏰ MÉTADONNÉES TEMPORELLES:\033[0m")
 				for tag, value in time_tags:
 					print(f" • \033[1;95m{tag}\033[0m: \033[97m{value}\033[0m")
-			
+			elif device_tags.count() == 0:
+				print(f"\n\033[1;31m⏰ MÉTADONNÉES TEMPORELLES:\033[0m")
+				print(f" • \033[1;91mAucune métadonnée temporelle trouvée\033[0m")
+
 			if camera_tags:
 				print(f"\n\033[1;32m📸 PARAMÈTRES DE PRISE DE VUE:\033[0m")
 				for tag, value in camera_tags:
 					print(f" • \033[1;92m{tag}\033[0m: \033[37m{value}\033[0m")
-			
+			elif device_tags.count() == 0:
+				print(f"\n\033[1;31m📸 PARAMÈTRES DE PRISE DE VUE:\033[0m")
+				print(f" • \033[1;91mAucun paramètre de prise de vue trouvée\033[0m")
+
 			if tech_tags:
-				print(f"\n\033[1;36m⚙️  INFORMATIONS TECHNIQUES:\033[0m")
+				print(f"\n\033[1;36m⚙️ INFORMATIONS TECHNIQUES:\033[0m")
 				for tag, value in tech_tags:
 					print(f" • \033[1;96m{tag}\033[0m: \033[37m{value}\033[0m")
+			elif device_tags.count() == 0:
+				print(f"\n\033[1;31m⚙️ INFORMATIONS TECHNIQUES:\033[0m")
+				print(f" • \033[1;91mAucun information technique trouvée\033[0m")
+
 		except Exception as e:
 			print(f"\n\033[1;31m❌ ERREUR LECTURE EXIF:\033[0m")
 			print(f" • \033[1;91mImpossible de lire les données EXIF de cette image\033[0m")
@@ -268,6 +338,9 @@ def extract_data(imagePath):
 						print(f" • \033[1;91mAucune donnée EXIF trouvée avec PIL\033[0m")
 			except Exception as pil_error:
 				print(f" • \033[1;91mÉchec avec PIL également\033[0m: {pil_error}")
+			
+			extract_hex_metadata(imagePath)
+			extract_with_exifread(imagePath)
 
 def file_lister(folder):
 	return os.listdir(folder)
