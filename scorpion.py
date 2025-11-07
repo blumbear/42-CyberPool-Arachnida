@@ -36,16 +36,21 @@ def format_gps_data(gps_tags):
 	gps_alt = None,
 	gps_time = None,
 	gps_date = None
-		
+	
+
+	def changeFormat(gpsData):
+		gpsData = gpsData[1:-1]
+		print(gpsData)
+
 	# Extraire les données GPS
 	for tag in gps_tags:
 		if tag[0] == 'gps_latitude' and 'ref' not in tag[0]:
 			gps_lat = tag[1]
-		elif tag[0] == 'gps_latitude_ref':
+		if tag[0] == 'gps_latitude_ref' or tag[0] == 'GPS GPSLatitudeRef':
 			gps_lat_ref = str(tag[1])
 		elif tag[0] == 'gps_longitude' and 'ref' not in tag[0]:
 			gps_lon = tag[1]
-		elif tag[0] == 'gps_longitude_ref':
+		elif tag[0] == 'gps_longitude_ref' or tag[0] == 'GPS GPSLongitudeRef':
 			gps_lon_ref = str(tag[1])
 		elif tag[0] == 'gps_altitude' and 'ref' not in tag[0]:
 			try:
@@ -60,7 +65,7 @@ def format_gps_data(gps_tags):
 			gps_time = tag[1]
 		elif tag[0] == 'gps_datestamp':
 			gps_date = str(tag[1])
-		
+
 	# Formater l'affichage
 	if gps_lat and gps_lon and gps_lat_ref and gps_lon_ref:
 		lat_decimal, lon_decimal = format_gps_coordinates(gps_lat, gps_lat_ref, gps_lon, gps_lon_ref)
